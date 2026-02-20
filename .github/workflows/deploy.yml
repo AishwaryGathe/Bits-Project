@@ -1,27 +1,55 @@
-name: Deploy to EC2 + ALB
+name: Deploy to EC2 via SSH
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:   # allows manual trigger
+  workflow_dispatch:          # allows manual trigger from GitHub UI
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10       # prevent hanging forever
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.4   # updated to a more recent stable version
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd ${{ secrets.PROJECT_PATH }}
-            git pull origin main --force
-            npm install --production=false   # only if you added new packages
-            pm2 restart simple-blog
-            echo "✅ Deployed at $(date)"
+          # passphrase: ${{ secrets.SSH_PASSPHRASE }}   # ← uncomment ONLY if your key has a passphrase
+          port: 22
+          timeout: 30s
+          command_timeout: 10m
+          debug: true               # ← very helpful when debugging auth issues
+
+          script: |-
+            set -e                  # exit on any error
+
+            cd ${{ secrets.PROJECT_PATH }} || { echo "Directory not found: ${{ secrets.PROJECT_PATH }}"; exit 1; }
+
+            echo "Current directory: $(pwd)"
+            echo "Current branch before pull: $(git branch --show-current)"
+
+            git fetch origin
+            git reset --hard origin/main
+            # git pull origin main --force   ← replaced with reset for cleaner update
+
+            # Only run npm install if package.json or package-lock.json changed
+            if git diff --name-only HEAD^ HEAD | grep -E 'package\.json|package-lock\.json'; then
+              echo "Dependencies changed → running npm install"
+              npm ci --prefer-offline --no-audit --progress=false
+            else
+              echo "No dependency changes"
+            fi
+
+            echo "Restarting application..."
+            pm2 restart simple-blog || { echo "pm2 restart failed"; exit 1; }
+
+            pm2 save
+
+            echo "Deployment completed successfully at $(date '+%Y-%m-%d %H:%M:%S IST')"
+            echo "Latest commit: $(git rev-parse --short HEAD)"
