@@ -7,7 +7,7 @@ function App() {
       title: "First small note",
       date: "Feb 24, 2026",
       content: `
-        Today i'm in BCPC here we are trying to get the knowlegde of Cloud.
+        Hey we Are performing the demo today with the team KDK GFG Chapter..
       `
     },
     {
