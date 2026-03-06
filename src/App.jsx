@@ -5,9 +5,9 @@ function App() {
   const posts = [
     {
       title: "First small note",
-      date: "Feb 24, 2026",
+      date: "March 6th, 2026",
       content: `
-        Hey we Are performing the demo today with the team KDK GFG Chapter..
+        Hey we Are performing the Live today with the team KDK GFG Chapter..
       `
     },
     {
