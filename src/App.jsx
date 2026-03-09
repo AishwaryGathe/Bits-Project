@@ -7,7 +7,7 @@ function App() {
       title: "First small note",
       date: "March 6th, 2026",
       content: `
-        Hey we Are performing the Live today with the team KDK GFG Chapter..
+        Hey we Are performing the Live today with the team of DS St. VPallotiCET 
 
         I,m ending this session Thank you   `
     },
